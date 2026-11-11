@@ -9,56 +9,69 @@ public class HotbarUIController : MonoBehaviour
 
     void OnEnable()
     {
-    uiDocument = GetComponent<UIDocument>();
-    var root = uiDocument.rootVisualElement;
-    
-    if (root == null) return; // Sécurité
-
-    var container = root.Q<VisualElement>("hotbar-container");
-
-    // Si le conteneur est introuvable, on affiche une erreur claire dans la console
-    if (container == null)
-        {
-        Debug.LogError("Impossible de trouver 'hotbar-container' ! Vérifie le nom dans UI Builder.");
-        return;
-        }
-
-    container.Clear(); // Nettoyage de sécurité avant de générer
-
-    // Génération automatique des 9 cases
-    for (int i = 0; i < 9; i++)
-        {
-        VisualElement slot = new VisualElement();
-        slot.style.width = 64;
-        slot.style.height = 64;
-        slot.style.marginLeft = 4;
-        slot.style.marginRight = 4;
-        slot.style.backgroundColor = new Color(0.15f, 0.15f, 0.15f, 0.85f);
+        uiDocument = GetComponent<UIDocument>();
+        var root = uiDocument.rootVisualElement;
         
-        SetSlotBorder(slot, 2, Color.gray);
+        if (root == null) return; // Sécurité
 
-        VisualElement icon = new VisualElement();
-        icon.style.flexGrow = 1;
-        icon.style.marginLeft = 6;
-        icon.style.marginRight = 6;
-        icon.style.marginTop = 6;
-        icon.style.marginBottom = 6;
-        slot.Add(icon);
+        var container = root.Q<VisualElement>("hotbar-container");
 
-        Label num = new Label((i + 1).ToString());
-        num.style.position = Position.Absolute;
-        num.style.top = 2;
-        num.style.left = 5;
-        num.style.color = Color.white;
-        num.style.fontSize = 12;
-        slot.Add(num);
-
-        container.Add(slot);
-        slots[i] = slot;
-        icons[i] = icon;
+        // Si le conteneur est introuvable, on affiche une erreur claire dans la console
+        if (container == null)
+        {
+            Debug.LogError("Impossible de trouver 'hotbar-container' ! Vérifie le nom dans UI Builder.");
+            return;
         }
 
-    UpdateSelection(0);
+        container.Clear(); // Nettoyage de sécurité avant de générer
+
+        // NOUVEAU : On cherche le manager de Drag & Drop sur le HUD
+        UIDragAndDropManager dragManager = GetComponent<UIDragAndDropManager>();
+
+        // Génération automatique des 9 cases
+        for (int i = 0; i < 9; i++)
+        {
+            VisualElement slot = new VisualElement();
+            // NOUVEAU : On nomme la case pour que le Drag & Drop la reconnaisse (ex: "hotbar-0")
+            slot.name = "hotbar-" + i;
+
+            slot.style.width = 64;
+            slot.style.height = 64;
+            slot.style.marginLeft = 4;
+            slot.style.marginRight = 4;
+            slot.style.backgroundColor = new Color(0.15f, 0.15f, 0.15f, 0.85f);
+            
+            SetSlotBorder(slot, 2, Color.gray);
+
+            VisualElement icon = new VisualElement();
+            icon.name = "icon"; // NOUVEAU : On nomme l'icône pour que le Drag & Drop puisse la trouver
+            icon.style.flexGrow = 1;
+            icon.style.marginLeft = 6;
+            icon.style.marginRight = 6;
+            icon.style.marginTop = 6;
+            icon.style.marginBottom = 6;
+            slot.Add(icon);
+
+            Label num = new Label((i + 1).ToString());
+            num.style.position = Position.Absolute;
+            num.style.top = 2;
+            num.style.left = 5;
+            num.style.color = Color.white;
+            num.style.fontSize = 12;
+            slot.Add(num);
+
+            // NOUVEAU : On inscrit la case fraîchement créée au système de souris
+            if (dragManager != null)
+            {
+                dragManager.RegisterSlot(slot);
+            }
+
+            container.Add(slot);
+            slots[i] = slot;
+            icons[i] = icon;
+        }
+
+        UpdateSelection(0);
     }
 
     public void UpdateSelection(int selectedIndex)

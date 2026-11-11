@@ -9,6 +9,7 @@ public class PlayerWorkbench : NetworkBehaviour
     [Header("Références")]
     public Transform playerCamera;
     public float interactRange = 3f;
+    public int[] workbenchItems = new int[3];
 
     private MonoBehaviour playerMovement;
     private MonoBehaviour playerLook;
@@ -19,8 +20,6 @@ public class PlayerWorkbench : NetworkBehaviour
     public WorkbenchUIController workbenchUI;
 
     [Header("Crafting Data")]
-    // Stocke l'ID des objets dans les 3 cases (0 = vide)
-    private int[] workbenchItems = new int[3]; 
     // Mémorise de quelle case de la Hotbar l'objet provient
     private int[] originHotbarSlots = new int[3]; 
     private PlayerInventory playerInventory;
@@ -77,7 +76,7 @@ public class PlayerWorkbench : NetworkBehaviour
 
             if (workbenchUI != null) 
             {
-                workbenchUI.ShowUI();
+                workbenchUI.ToggleUI(true);
             }
             else
             {
@@ -91,37 +90,28 @@ public class PlayerWorkbench : NetworkBehaviour
         ExitWorkbench();
     }
 
-    void ExitWorkbench()
+    public void ExitWorkbench()
     {
-        if (workbenchUI != null) workbenchUI.HideUI();
         isAtWorkbench = false;
-        for (int i = 0; i < 3; i++)
+
+        // 1. On ferme l'interface
+        if (workbenchUI != null)
         {
-            if (workbenchItems[i] != 0)
-            {
-                // On demande au serveur de remettre l'objet dans l'inventaire
-                if (playerInventory != null)
-                {
-                    playerInventory.ReturnItemToInventoryRpc(workbenchItems[i], originHotbarSlots[i]);
-                }
-                
-                // On vide la case de l'établi
-                workbenchItems[i] = 0;
-            }
+            workbenchUI.ToggleUI(false); 
         }
 
-        // On remet la priorité à 0. Le Brain ramène la vue dans la tête du joueur !
-        if (activeWorkbenchCam != null)
-        {
-            activeWorkbenchCam.Priority = 0;
-            activeWorkbenchCam = null;
-        }
-
-        // Cache la souris
+        // 2. On verrouille et on cache la souris
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
-        // On attend la fin du "Lerp" cinématique avant de redonner les contrôles
+        // 3. Restitution de la caméra au Joueur (Cinemachine 3)
+        if (activeWorkbenchCam != null)
+        {
+            activeWorkbenchCam.Priority = 0;
+            activeWorkbenchCam = null; // Optionnel : on vide la référence
+        }
+
+        // 4. On lance la coroutine qui attend la fin de la caméra pour rendre le mouvement !
         StartCoroutine(WaitAndEnableControl());
     }
 

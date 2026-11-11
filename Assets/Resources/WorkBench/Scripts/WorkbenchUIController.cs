@@ -12,29 +12,35 @@ public class WorkbenchUIController : MonoBehaviour
         if (uiDocument.rootVisualElement == null) return;
         
         container = uiDocument.rootVisualElement.Q<VisualElement>("workbench-container");
-        
-        // Sécurité : on s'assure qu'il est bien caché au lancement
         if (container != null) container.style.display = DisplayStyle.None;
+
+        // --- NOUVEAU : Inscription des cases ---
+        UIDragAndDropManager dragManager = GetComponent<UIDragAndDropManager>();
+        if (dragManager != null && container != null)
+        {
+            // On cherche toutes les cases manuelles (wb-0, wb-1, wb-2) et on les inscrit
+            var wbSlots = container.Query<VisualElement>(className: "slot").ToList();
+            foreach (var slot in wbSlots)
+            {
+                dragManager.RegisterSlot(slot);
+                
+                // Optionnel: on s'assure qu'elles ont bien un enfant "icon" pour recevoir l'image
+                if (slot.Q<VisualElement>("icon") == null)
+                {
+                    VisualElement icon = new VisualElement { name = "icon" };
+                    icon.style.flexGrow = 1;
+                    slot.Add(icon);
+                }
+            }
+        }
     }
 
-    public void ShowUI()
+    public void ToggleUI(bool isVisible)
     {
-    Debug.Log("Demande d'affichage du menu Craft reçue !");
-    
-        if (container != null) 
+        if (container != null)
         {
-            container.style.display = DisplayStyle.Flex;
-            Debug.Log("Le container a été affiché avec succès.");
+            container.style.display = isVisible ? DisplayStyle.Flex : DisplayStyle.None;
         }
-        else
-        {
-            Debug.LogError("Échec : Le container 'workbench-container' est introuvable. Vérifie le nom dans UI Builder.");
-        }
-    }
-
-    public void HideUI()
-    {
-        if (container != null) container.style.display = DisplayStyle.None;
     }
 
 }

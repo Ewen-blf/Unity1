@@ -28,7 +28,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1296944699843915312}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0.3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -488,7 +488,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 4137155888
+  GlobalObjectIdHash: 4212657372
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -613,6 +613,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   playerCamera: {fileID: 7358852963353960392}
   interactRange: 3
+  workbenchItems: 000000000000000000000000
   workbenchUI: {fileID: 3012857255071120010}
 --- !u!1 &7324138098377407120
 GameObject:
@@ -702,6 +703,7 @@ GameObject:
   - component: {fileID: 803492740451922202}
   - component: {fileID: 1280580777524073868}
   - component: {fileID: 3012857255071120010}
+  - component: {fileID: 8767991756146335762}
   m_Layer: 5
   m_Name: MainHUD
   m_TagString: Untagged
@@ -771,3 +773,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ebde6824683d9a24488693156853e64d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WorkbenchUIController
+--- !u!114 &8767991756146335762
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9065402040480346647}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dcb81692fe5db8040827f515eabca90f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIDragAndDropManager

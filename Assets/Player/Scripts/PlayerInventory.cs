@@ -202,4 +202,31 @@ public class PlayerInventory : NetworkBehaviour
             Debug.LogWarning("Inventaire plein, l'objet devrait tomber au sol !");
         }
     }
+
+    [Rpc(SendTo.Server)]
+    public void SwapItemsRpc(string slotA, string slotB)
+    {
+        PlayerWorkbench workbench = GetComponent<PlayerWorkbench>();
+        if (workbench == null) return;
+
+        // 1. Découpage des noms (ex: "hotbar-2" -> type "hotbar", id 2)
+        string typeA = slotA.Split('-')[0];
+        int idA = int.Parse(slotA.Split('-')[1]);
+
+        string typeB = slotB.Split('-')[0];
+        int idB = int.Parse(slotB.Split('-')[1]);
+
+        // 2. Lecture des objets en mémoire
+        int itemA = (typeA == "hotbar") ? inventorySlots[idA] : workbench.workbenchItems[idA];
+        int itemB = (typeB == "hotbar") ? inventorySlots[idB] : workbench.workbenchItems[idB];
+
+        // 3. Échange dans les tableaux !
+        if (typeA == "hotbar") inventorySlots[idA] = itemB;
+        else workbench.workbenchItems[idA] = itemB;
+
+        if (typeB == "hotbar") inventorySlots[idB] = itemA;
+        else workbench.workbenchItems[idB] = itemA;
+        
+        // (Le NetworkList de la Hotbar mettra à jour l'UI automatiquement pour tous les clients)
+    }
 }
