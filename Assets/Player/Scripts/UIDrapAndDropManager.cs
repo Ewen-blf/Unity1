@@ -1,37 +1,38 @@
 using UnityEngine;
 using UnityEngine.UIElements;
-using System.Linq;
 
+/// <summary>
+/// Gère le glisser-déposer (Drag & Drop) visuel des icônes entre les emplacements d'UI Toolkit 
+/// (Hotbar et Établi) et déclenche la synchronisation réseau sur PlayerInventory.
+/// </summary>
 public class UIDragAndDropManager : MonoBehaviour
 {
     private UIDocument uiDoc;
     private VisualElement ghostIcon;
     private VisualElement originalSlot;
+    private PlayerInventory playerInventory;
     private bool isDragging = false;
 
     void OnEnable()
     {
         uiDoc = GetComponent<UIDocument>();
+        playerInventory = GetComponentInParent<PlayerInventory>();
         
         if (uiDoc == null)
         {
-            Debug.LogError("🚨 ERREUR : Le script DragAndDropManager n'est pas sur le même objet que le UIDocument (MainHUD) !");
+            Debug.LogError("ERREUR : Le script UIDragAndDropManager n'est pas sur le même objet que le UIDocument (MainHUD) !");
             return;
         }
 
         var root = uiDoc.rootVisualElement;
-        
-        if (root == null) 
-        {
-            Debug.LogWarning("⚠️ ATTENTION : Le UIDocument est là, mais aucun fichier UI n'y est assigné.");
-            return;
-        }
+        if (root == null) return;
 
         ghostIcon = root.Q<VisualElement>("ghost-icon");
         if (ghostIcon != null) 
         {
             ghostIcon.style.display = DisplayStyle.None;
             ghostIcon.style.position = Position.Absolute;
+            ghostIcon.pickingMode = PickingMode.Ignore;
         }
         else
         {
@@ -51,19 +52,14 @@ public class UIDragAndDropManager : MonoBehaviour
     void OnPointerDown(PointerDownEvent evt, VisualElement slot)
     {
         VisualElement icon = slot.Q<VisualElement>("icon");
-
-        if (icon == null)
-        {
-            Debug.LogError($"❌ Annulation : La case {slot.name} n'a pas d'enfant nommé 'icon' !");
-            return;
-        }
+        if (icon == null) return;
 
         if (icon.style.backgroundImage.value.texture == null && icon.style.backgroundImage.value.sprite == null)
         {
-            return; // Case vide, on annule silencieusement
+            return;
         }
 
-        if (evt.button == 0) // Clic gauche
+        if (evt.button == 0)
         {
             isDragging = true;
             originalSlot = slot;
@@ -77,8 +73,6 @@ public class UIDragAndDropManager : MonoBehaviour
 
             slot.CapturePointer(evt.pointerId);
             evt.StopPropagation();
-            
-            Debug.Log($"🖱️ Drag démarré depuis : {slot.name}");
         }
     }
 
@@ -91,7 +85,6 @@ public class UIDragAndDropManager : MonoBehaviour
 
     void UpdateGhostPosition(Vector2 mousePos)
     {
-        // On centre l'icône de 64x64 sur la pointe du curseur (-32px)
         ghostIcon.style.left = mousePos.x - 32;
         ghostIcon.style.top = mousePos.y - 32;
     }
@@ -101,23 +94,19 @@ public class UIDragAndDropManager : MonoBehaviour
         if (!isDragging) return;
         isDragging = false;
         
-        // 1. Libération de la souris et nettoyage visuel
         slot.ReleasePointer(evt.pointerId);
         if (ghostIcon != null) ghostIcon.style.display = DisplayStyle.None;
         
         VisualElement originalIcon = originalSlot.Q<VisualElement>("icon");
         if (originalIcon != null) originalIcon.style.opacity = 1f;
 
-        // 2. Tir de laser pour trouver la case d'arrivée
         VisualElement targetElement = uiDoc.rootVisualElement.panel.Pick(evt.position);
         VisualElement targetSlot = FindParentWithClass(targetElement, "slot");
 
-        // 3. Traitement du transfert
         if (targetSlot != null && targetSlot != originalSlot)
         {
             VisualElement targetIcon = targetSlot.Q<VisualElement>("icon");
 
-            // --- A. ÉCHANGE VISUEL IMMÉDIAT ---
             if (targetIcon != null && originalIcon != null)
             {
                 var tempImg = targetIcon.style.backgroundImage;
@@ -125,24 +114,16 @@ public class UIDragAndDropManager : MonoBehaviour
                 originalIcon.style.backgroundImage = tempImg;
             }
 
-            // --- B. ENVOI AU SERVEUR ---
-            PlayerInventory inventory = GetComponentInParent<PlayerInventory>();
-            if (inventory != null)
+            if (playerInventory == null) playerInventory = GetComponentInParent<PlayerInventory>();
+            if (playerInventory != null)
             {
-                inventory.SwapItemsRpc(originalSlot.name, targetSlot.name);
+                playerInventory.SwapItemsRpc(originalSlot.name, targetSlot.name);
             }
-
-            Debug.Log($"✅ TRANSFERT RÉUSSI : {originalSlot.name} ---> {targetSlot.name}");
-        }
-        else
-        {
-            Debug.Log($"❌ Annulé. La souris a été relâchée sur : {(targetSlot != null ? targetSlot.name : "le vide")}");
         }
         
         evt.StopPropagation();
     }
 
-    // Fonction utilitaire pour remonter l'arbre UI
     VisualElement FindParentWithClass(VisualElement element, string className)
     {
         while (element != null)

@@ -1,20 +1,27 @@
 using UnityEngine;
 using UnityEngine.UIElements;
 
+/// <summary>
+/// Contrôle l'affichage du conteneur UI Toolkit de l'établi, enregistre ses emplacements 
+/// auprès du système de Drag & Drop et relie le bouton de fabrication au joueur.
+/// </summary>
 public class WorkbenchUIController : MonoBehaviour
 {
     private UIDocument uiDocument;
     private VisualElement container;
+    private Button craftBtn;
+    private PlayerWorkbench playerWorkbench;
 
     void OnEnable()
     {
         uiDocument = GetComponent<UIDocument>();
-        if (uiDocument.rootVisualElement == null) return;
+        playerWorkbench = GetComponentInParent<PlayerWorkbench>();
+
+        if (uiDocument == null || uiDocument.rootVisualElement == null) return;
         
         container = uiDocument.rootVisualElement.Q<VisualElement>("workbench-container");
         if (container != null) container.style.display = DisplayStyle.None;
 
-        // --- Inscription des cases ---
         UIDragAndDropManager dragManager = GetComponent<UIDragAndDropManager>();
         if (dragManager != null && container != null)
         {
@@ -27,25 +34,34 @@ public class WorkbenchUIController : MonoBehaviour
                 {
                     VisualElement icon = new VisualElement { name = "icon" };
                     icon.style.flexGrow = 1;
+                    icon.pickingMode = PickingMode.Ignore;
                     slot.Add(icon);
                 }
             }
         }
 
-        // --- NOUVEAU : Connexion du bouton Fabriquer ---
-        Button craftBtn = uiDocument.rootVisualElement.Q<Button>("craft-button");
+        craftBtn = uiDocument.rootVisualElement.Q<Button>("craft-button");
         if (craftBtn != null)
         {
             craftBtn.clicked += OnCraftButtonClicked;
         }
     }
 
+    void OnDisable()
+    {
+        if (craftBtn != null)
+        {
+            craftBtn.clicked -= OnCraftButtonClicked;
+        }
+    }
+
     private void OnCraftButtonClicked()
     {
-        PlayerWorkbench pw = GetComponentInParent<PlayerWorkbench>();
-        if (pw != null)
+        if (playerWorkbench == null) playerWorkbench = GetComponentInParent<PlayerWorkbench>();
+        
+        if (playerWorkbench != null)
         {
-            pw.StartPhysicalCrafting();
+            playerWorkbench.StartPhysicalCrafting();
         }
         else
         {
@@ -60,5 +76,4 @@ public class WorkbenchUIController : MonoBehaviour
             container.style.display = isVisible ? DisplayStyle.Flex : DisplayStyle.None;
         }
     }
-
 }

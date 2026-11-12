@@ -1,8 +1,13 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Unity.Netcode; // Ajout réseau
+using Unity.Netcode;
+using Unity.Cinemachine;
 
-public class PlayerLook : NetworkBehaviour // Changement en NetworkBehaviour
+/// <summary>
+/// Contrôle la rotation de la caméra à la première personne (axe vertical) 
+/// et l'orientation du corps du joueur (axe horizontal) pour le propriétaire réseau.
+/// </summary>
+public class PlayerLook : NetworkBehaviour
 {
     [Header("Paramètres de vue")]
     public float mouseSensitivity = 100f;
@@ -18,13 +23,13 @@ public class PlayerLook : NetworkBehaviour // Changement en NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        if (!IsOwner)
+        if (!IsOwner && playerCamera != null)
         {
-            var cinemachineCam = playerCamera.GetComponent<Unity.Cinemachine.CinemachineCamera>();
-            if (cinemachineCam != null) 
-                {
-                    cinemachineCam.enabled = false;
-                }
+            var cinemachineCam = playerCamera.GetComponent<CinemachineCamera>();
+            if (cinemachineCam != null)
+            {
+                cinemachineCam.enabled = false;
+            }
         }
     }
 
@@ -35,7 +40,6 @@ public class PlayerLook : NetworkBehaviour // Changement en NetworkBehaviour
 
     void Update()
     {
-        // On empêche les autres joueurs de tourner avec notre souris
         if (!IsOwner) return;
 
         float mouseX = lookInput.x * mouseSensitivity * Time.deltaTime;

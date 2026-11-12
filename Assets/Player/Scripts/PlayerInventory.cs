@@ -2,28 +2,32 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+/// <summary>
+/// Gère l'inventaire réseau du joueur (Hotbar), le ramassage des objets au sol, 
+/// l'affichage du modèle 3D en main (HoldPoint) et la synchronisation des échanges avec l'établi.
+/// </summary>
 public class PlayerInventory : NetworkBehaviour
 {
     private const int HOTBAR_SIZE = 9;
 
     [Header("Références")]
     public Transform playerCamera;
-    public Transform holdPoint; // NOUVEAU : Le point d'attache (la main)
+    public Transform holdPoint;
     public float interactRange = 3f;
     public ItemDatabase itemDatabase;
+    public HotbarUIController uiController;
 
     private NetworkList<int> inventorySlots;
-    
-    // NOUVEAU : Synchronise le choix de la molette sur le réseau
     private NetworkVariable<int> activeSlot = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     private int localSelectedSlot = 0;
-    public HotbarUIController uiController;
-    private GameObject currentVisualModel; // L'arme physique générée
+    private GameObject currentVisualModel;
+    private PlayerWorkbench playerWorkbench;
 
     void Awake()
     {
         inventorySlots = new NetworkList<int>(default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+        playerWorkbench = GetComponent<PlayerWorkbench>();
     }
 
     public override void OnNetworkSpawn()
@@ -37,15 +41,11 @@ public class PlayerInventory : NetworkBehaviour
         {
             RefreshFullUI();
         }
-        else
+        else if (uiController != null)
         {
-            if (uiController != null)
-            {
-                uiController.gameObject.SetActive(false);
-            }
+            uiController.gameObject.SetActive(false);
         }
 
-        // Tout le monde (Hôte et Client) écoute ces changements pour afficher les armes
         inventorySlots.OnListChanged += OnInventoryChanged;
         activeSlot.OnValueChanged += OnActiveSlotChanged;
         
@@ -90,14 +90,22 @@ public class PlayerInventory : NetworkBehaviour
     void OnInteract(InputValue value)
     {
         if (!IsOwner || !value.isPressed) return;
+        if (playerWorkbench != null && playerWorkbench.IsAtWorkbench) return;
 
         Ray ray = new Ray(playerCamera.position, playerCamera.forward);
         if (Physics.Raycast(ray, out RaycastHit hit, interactRange))
         {
             WorldItem item = hit.collider.GetComponentInParent<WorldItem>();
-            if (item != null && item.NetworkObject != null && item.NetworkObject.IsSpawned)
+            if (item != null)
             {
-                RequestPickupRpc(item.NetworkObject.NetworkObjectId, localSelectedSlot);
+                if (item.NetworkObject != null && item.NetworkObject.IsSpawned)
+                {
+                    RequestPickupRpc(item.NetworkObject.NetworkObjectId, localSelectedSlot);
+                }
+                else
+                {
+                    Debug.LogWarning($"Impossible de ramasser {item.name} : NetworkObject manquant ou non Spawné sur le réseau !");
+                }
             }
         }
     }
@@ -134,32 +142,37 @@ public class PlayerInventory : NetworkBehaviour
     private void OnInventoryChanged(NetworkListEvent<int> changeEvent)
     {
         if (IsOwner) RefreshFullUI();
-        RefreshHandVisual(activeSlot.Value); // Met à jour l'arme si on la ramasse directement dans la case active
+        RefreshHandVisual(activeSlot.Value);
     }
 
     private void OnActiveSlotChanged(int previousValue, int newValue)
     {
-        RefreshHandVisual(newValue); // Met à jour l'arme quand on tourne la molette
+        RefreshHandVisual(newValue);
     }
 
     private void RefreshHandVisual(int slotIndex)
     {
-        // 1. Supprime l'ancienne arme de la main
         if (currentVisualModel != null) Destroy(currentVisualModel);
         
         if (slotIndex < 0 || slotIndex >= inventorySlots.Count) return;
 
-        // 2. Vérifie la nouvelle arme
         int itemId = inventorySlots[slotIndex];
-        if (itemId == 0) return; 
+        if (itemId == 0 || itemDatabase == null) return; 
 
         ItemData data = itemDatabase.GetItemById(itemId);
-        if (data != null && data.handPrefab != null)
+        if (data != null && data.handPrefab != null && holdPoint != null)
         {
-            // 3. Crée la nouvelle arme dans le HoldPoint
             currentVisualModel = Instantiate(data.handPrefab, holdPoint);
             currentVisualModel.transform.localPosition = Vector3.zero;
             currentVisualModel.transform.localRotation = Quaternion.identity;
+        }
+    }
+
+    public void SetHandVisible(bool visible)
+    {
+        if (holdPoint != null)
+        {
+            holdPoint.gameObject.SetActive(visible);
         }
     }
 
@@ -183,14 +196,12 @@ public class PlayerInventory : NetworkBehaviour
     {
         if (itemId == 0) return;
 
-        // 1. On essaie de le remettre exactement là où il était
         if (originalSlot >= 0 && originalSlot < HOTBAR_SIZE && inventorySlots[originalSlot] == 0)
         {
             inventorySlots[originalSlot] = itemId;
             return;
         }
 
-        // 2. Sécurité : si la case est prise, on cherche la première case vide
         int fallbackSlot = FindAvailableSlot(0);
         if (fallbackSlot != -1)
         {
@@ -198,7 +209,6 @@ public class PlayerInventory : NetworkBehaviour
         }
         else
         {
-            // Plus tard : Si l'inventaire est totalement plein, on jettera l'objet au sol (Drop)
             Debug.LogWarning("Inventaire plein, l'objet devrait tomber au sol !");
         }
     }
@@ -206,27 +216,24 @@ public class PlayerInventory : NetworkBehaviour
     [Rpc(SendTo.Server)]
     public void SwapItemsRpc(string slotA, string slotB)
     {
-        PlayerWorkbench workbench = GetComponent<PlayerWorkbench>();
-        if (workbench == null) return;
+        if (playerWorkbench == null) playerWorkbench = GetComponent<PlayerWorkbench>();
+        if (playerWorkbench == null) return;
 
-        // 1. Découpage des noms (ex: "hotbar-2" -> type "hotbar", id 2)
-        string typeA = slotA.Split('-')[0];
-        int idA = int.Parse(slotA.Split('-')[1]);
+        string[] partsA = slotA.Split('-');
+        string typeA = partsA[0];
+        int idA = int.Parse(partsA[1]);
 
-        string typeB = slotB.Split('-')[0];
-        int idB = int.Parse(slotB.Split('-')[1]);
+        string[] partsB = slotB.Split('-');
+        string typeB = partsB[0];
+        int idB = int.Parse(partsB[1]);
 
-        // 2. Lecture des objets en mémoire
-        int itemA = (typeA == "hotbar") ? inventorySlots[idA] : workbench.workbenchItems[idA];
-        int itemB = (typeB == "hotbar") ? inventorySlots[idB] : workbench.workbenchItems[idB];
+        int itemA = (typeA == "hotbar") ? inventorySlots[idA] : playerWorkbench.workbenchItems[idA];
+        int itemB = (typeB == "hotbar") ? inventorySlots[idB] : playerWorkbench.workbenchItems[idB];
 
-        // 3. Échange dans les tableaux !
         if (typeA == "hotbar") inventorySlots[idA] = itemB;
-        else workbench.workbenchItems[idA] = itemB;
+        else playerWorkbench.SetWorkbenchItemServer(idA, itemB);
 
         if (typeB == "hotbar") inventorySlots[idB] = itemA;
-        else workbench.workbenchItems[idB] = itemA;
-        
-        // (Le NetworkList de la Hotbar mettra à jour l'UI automatiquement pour tous les clients)
+        else playerWorkbench.SetWorkbenchItemServer(idB, itemA);
     }
 }

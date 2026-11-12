@@ -1,6 +1,10 @@
 using UnityEngine;
 using UnityEngine.UIElements;
 
+/// <summary>
+/// Gère l'affichage, la génération dynamique des 9 emplacements de la barre d'action (Hotbar)
+/// via UI Toolkit et la mise à jour visuelle des icônes et de la sélection active.
+/// </summary>
 public class HotbarUIController : MonoBehaviour
 {
     private UIDocument uiDocument;
@@ -12,27 +16,23 @@ public class HotbarUIController : MonoBehaviour
         uiDocument = GetComponent<UIDocument>();
         var root = uiDocument.rootVisualElement;
         
-        if (root == null) return; // Sécurité
+        if (root == null) return;
 
         var container = root.Q<VisualElement>("hotbar-container");
 
-        // Si le conteneur est introuvable, on affiche une erreur claire dans la console
         if (container == null)
         {
             Debug.LogError("Impossible de trouver 'hotbar-container' ! Vérifie le nom dans UI Builder.");
             return;
         }
 
-        container.Clear(); // Nettoyage de sécurité avant de générer
+        container.Clear();
 
-        // NOUVEAU : On cherche le manager de Drag & Drop sur le HUD
         UIDragAndDropManager dragManager = GetComponent<UIDragAndDropManager>();
 
-        // Génération automatique des 9 cases
         for (int i = 0; i < 9; i++)
         {
             VisualElement slot = new VisualElement();
-            // NOUVEAU : On nomme la case pour que le Drag & Drop la reconnaisse (ex: "hotbar-0")
             slot.name = "hotbar-" + i;
 
             slot.style.width = 64;
@@ -44,7 +44,7 @@ public class HotbarUIController : MonoBehaviour
             SetSlotBorder(slot, 2, Color.gray);
 
             VisualElement icon = new VisualElement();
-            icon.name = "icon"; // NOUVEAU : On nomme l'icône pour que le Drag & Drop puisse la trouver
+            icon.name = "icon";
             icon.style.flexGrow = 1;
             icon.style.marginLeft = 6;
             icon.style.marginRight = 6;
@@ -60,7 +60,6 @@ public class HotbarUIController : MonoBehaviour
             num.style.fontSize = 12;
             slot.Add(num);
 
-            // NOUVEAU : On inscrit la case fraîchement créée au système de souris
             if (dragManager != null)
             {
                 dragManager.RegisterSlot(slot);
@@ -79,7 +78,7 @@ public class HotbarUIController : MonoBehaviour
         for (int i = 0; i < 9; i++)
         {
             if (i == selectedIndex)
-                SetSlotBorder(slots[i], 4, Color.yellow); // Case sélectionnée en jaune
+                SetSlotBorder(slots[i], 4, Color.yellow);
             else
                 SetSlotBorder(slots[i], 2, Color.gray);
         }
@@ -87,6 +86,8 @@ public class HotbarUIController : MonoBehaviour
 
     public void UpdateSlotIcon(int index, Sprite sprite)
     {
+        if (index < 0 || index >= icons.Length || icons[index] == null) return;
+
         if (sprite != null)
             icons[index].style.backgroundImage = new StyleBackground(sprite);
         else
@@ -95,6 +96,7 @@ public class HotbarUIController : MonoBehaviour
 
     private void SetSlotBorder(VisualElement el, float width, Color color)
     {
+        if (el == null) return;
         el.style.borderTopWidth = el.style.borderBottomWidth = el.style.borderLeftWidth = el.style.borderRightWidth = width;
         el.style.borderTopColor = el.style.borderBottomColor = el.style.borderLeftColor = el.style.borderRightColor = color;
     }
