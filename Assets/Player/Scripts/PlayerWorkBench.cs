@@ -3,6 +3,7 @@ using UnityEngine.InputSystem;
 using Unity.Netcode;
 using Unity.Cinemachine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class PlayerWorkbench : NetworkBehaviour
 {
@@ -10,6 +11,10 @@ public class PlayerWorkbench : NetworkBehaviour
     public Transform playerCamera;
     public float interactRange = 3f;
     public int[] workbenchItems = new int[3];
+
+    [Header("Visuel Joueur")]
+    [Tooltip("Glisse ici l'objet de ton bras/arme (Dummy) pour qu'il se cache automatiquement à l'établi")]
+    public GameObject weaponDummy; 
 
     private MonoBehaviour playerMovement;
     private MonoBehaviour playerLook;
@@ -23,6 +28,12 @@ public class PlayerWorkbench : NetworkBehaviour
     // Mémorise de quelle case de la Hotbar l'objet provient
     private int[] originHotbarSlots = new int[3]; 
     private PlayerInventory playerInventory;
+    
+    [Header("Base de données")]
+    public ItemDatabase database;
+    
+    private Workbench currentWorkbench;
+    private List<GameObject> spawnedCraftObjects = new List<GameObject>();
 
     public override void OnNetworkSpawn()
     {
@@ -34,8 +45,11 @@ public class PlayerWorkbench : NetworkBehaviour
 
     void Start()
     {
+        // ⚠️ Je suppose ici que tes scripts s'appellent exactement "PlayerMovement" et "PlayerLook".
+        // Si c'est différent (ex: "FirstPersonController"), dis-le moi !
         playerMovement = GetComponent("PlayerMovement") as MonoBehaviour;
         playerLook = GetComponent("PlayerLook") as MonoBehaviour; 
+        
         brain = playerCamera.GetComponent<CinemachineBrain>();
         playerInventory = GetComponent<PlayerInventory>();
     }
@@ -60,28 +74,31 @@ public class PlayerWorkbench : NetworkBehaviour
         isAtWorkbench = true;
         activeWorkbenchCam = cam;
 
-        // Bloque les mouvements du joueur
+        // 1. Bloque les mouvements
         if (playerMovement != null) playerMovement.enabled = false;
         if (playerLook != null) playerLook.enabled = false;
 
-        // Affiche la souris
+        // 2. Cache l'arme (Dummy) !
+        if (weaponDummy != null) weaponDummy.SetActive(false);
+
+        // 3. Affiche la souris
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
         activeWorkbenchCam.Priority = 100;
         if (workbenchUI == null) 
-            {
-                workbenchUI = FindFirstObjectByType<WorkbenchUIController>();
-            }
+        {
+            workbenchUI = FindFirstObjectByType<WorkbenchUIController>();
+        }
 
-            if (workbenchUI != null) 
-            {
-                workbenchUI.ToggleUI(true);
-            }
-            else
-            {
-                Debug.LogError("Le Player n'arrive pas à trouver le WorkbenchUIController dans la scène !");
-            }
+        if (workbenchUI != null) 
+        {
+            workbenchUI.ToggleUI(true);
+        }
+        else
+        {
+            Debug.LogError("Le Player n'arrive pas à trouver le WorkbenchUIController !");
+        }
     }
 
     void OnExit(InputValue value)
@@ -94,36 +111,85 @@ public class PlayerWorkbench : NetworkBehaviour
     {
         isAtWorkbench = false;
 
-        // 1. On ferme l'interface
-        if (workbenchUI != null)
-        {
-            workbenchUI.ToggleUI(false); 
-        }
+        if (workbenchUI != null) workbenchUI.ToggleUI(false); 
 
-        // 2. On verrouille et on cache la souris
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
-        // 3. Restitution de la caméra au Joueur (Cinemachine 3)
         if (activeWorkbenchCam != null)
         {
             activeWorkbenchCam.Priority = 0;
-            activeWorkbenchCam = null; // Optionnel : on vide la référence
+            
+            Workbench wb = activeWorkbenchCam.GetComponentInParent<Workbench>();
+            if (wb != null && wb.WorkbenchTopCamera != null)
+            {
+                wb.WorkbenchTopCamera.Priority = 0;
+            }
+            
+            activeWorkbenchCam = null;
         }
 
-        // 4. On lance la coroutine qui attend la fin de la caméra pour rendre le mouvement !
         StartCoroutine(WaitAndEnableControl());
     }
 
     IEnumerator WaitAndEnableControl()
     {
-        // Attend que Cinemachine ait totalement terminé son voyage
         yield return new WaitUntil(() => !brain.IsBlending);
 
-        if (!isAtWorkbench) // Sécurité si on a cliqué sur E pendant le retour
+        if (!isAtWorkbench) 
         {
+            // Réactive les mouvements
             if (playerMovement != null) playerMovement.enabled = true;
             if (playerLook != null) playerLook.enabled = true;
+            
+            // Fait réapparaître l'arme (Dummy) !
+            if (weaponDummy != null) weaponDummy.SetActive(true);
+        }
+    }
+
+    public void StartPhysicalCrafting()
+    {
+        if (workbenchUI != null) workbenchUI.ToggleUI(false);
+
+        if (activeWorkbenchCam != null)
+        {
+            Workbench wb = activeWorkbenchCam.GetComponentInParent<Workbench>();
+            
+            if (wb == null) return;
+
+            if (wb.WorkbenchTopCamera != null)
+            {
+                wb.WorkbenchTopCamera.Priority = 110;
+            }
+
+            if (database == null) return;
+
+            for (int i = 0; i < workbenchItems.Length; i++)
+            {
+                int itemId = workbenchItems[i];
+                
+                if (itemId > 0)
+                {
+                    ItemData itemData = database.GetItemById(itemId);
+
+                    if (itemData == null || itemData.Prefab3D == null)
+                    {
+                        Debug.LogError($"❌ Le Prefab3D manque pour : {itemData?.itemName ?? "ID inconnu"}");
+                        continue;
+                    }
+
+                    Transform pt = wb.spawnPoints[i];
+                    GameObject obj = Instantiate(itemData.Prefab3D, pt.position, pt.rotation);
+                    
+                    if (obj.TryGetComponent<Rigidbody>(out Rigidbody rb))
+                    {
+                        rb.isKinematic = false;
+                        rb.useGravity = true;
+                    }
+                    
+                    spawnedCraftObjects.Add(obj);
+                }
+            }
         }
     }
 }

@@ -16,3 +16,4 @@ MonoBehaviour:
   itemName: Pistolet
   icon: {fileID: 10901, guid: 0000000000000000f000000000000000, type: 0}
   handPrefab: {fileID: 4215927765794939329, guid: c2bb672ce211cff4b9924e32e1e439ca, type: 3}
+  Prefab3D: {fileID: 591727753422186567, guid: 81aa3360c289108408019786571e6c30, type: 3}

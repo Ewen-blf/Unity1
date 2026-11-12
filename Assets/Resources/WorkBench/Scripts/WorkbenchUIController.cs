@@ -14,17 +14,15 @@ public class WorkbenchUIController : MonoBehaviour
         container = uiDocument.rootVisualElement.Q<VisualElement>("workbench-container");
         if (container != null) container.style.display = DisplayStyle.None;
 
-        // --- NOUVEAU : Inscription des cases ---
+        // --- Inscription des cases ---
         UIDragAndDropManager dragManager = GetComponent<UIDragAndDropManager>();
         if (dragManager != null && container != null)
         {
-            // On cherche toutes les cases manuelles (wb-0, wb-1, wb-2) et on les inscrit
             var wbSlots = container.Query<VisualElement>(className: "slot").ToList();
             foreach (var slot in wbSlots)
             {
                 dragManager.RegisterSlot(slot);
                 
-                // Optionnel: on s'assure qu'elles ont bien un enfant "icon" pour recevoir l'image
                 if (slot.Q<VisualElement>("icon") == null)
                 {
                     VisualElement icon = new VisualElement { name = "icon" };
@@ -32,6 +30,26 @@ public class WorkbenchUIController : MonoBehaviour
                     slot.Add(icon);
                 }
             }
+        }
+
+        // --- NOUVEAU : Connexion du bouton Fabriquer ---
+        Button craftBtn = uiDocument.rootVisualElement.Q<Button>("craft-button");
+        if (craftBtn != null)
+        {
+            craftBtn.clicked += OnCraftButtonClicked;
+        }
+    }
+
+    private void OnCraftButtonClicked()
+    {
+        PlayerWorkbench pw = GetComponentInParent<PlayerWorkbench>();
+        if (pw != null)
+        {
+            pw.StartPhysicalCrafting();
+        }
+        else
+        {
+            Debug.LogError("Impossible de trouver PlayerWorkbench sur le parent !");
         }
     }
 
