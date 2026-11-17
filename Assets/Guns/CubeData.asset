@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0e26bc7d13a325c45b9d26d68167f7d4, type: 3}
   m_Name: CubeData
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
-  itemId: 2
+  itemId: 10
   itemName: Cube
   icon: {fileID: 10911, guid: 0000000000000000f000000000000000, type: 0}
   handPrefab: {fileID: 3839612103219391474, guid: 23b04d0ebdd5d2f4fb4bf90782efc00e, type: 3}

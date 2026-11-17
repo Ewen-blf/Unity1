@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0e26bc7d13a325c45b9d26d68167f7d4, type: 3}
+  m_Name: CulasseData
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  itemId: 2
+  itemName: Culasse
+  icon: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  handPrefab: {fileID: 919132149155446097, guid: 3bec0da477530b94586e5494d25a9327, type: 3}
+  Prefab3D: {fileID: 8045297391345645714, guid: dbd287f937496d6489216272ab68a607, type: 3}

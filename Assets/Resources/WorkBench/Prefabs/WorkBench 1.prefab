@@ -131,7 +131,7 @@ Transform:
   m_GameObject: {fileID: 1585255222174837068}
   serializedVersion: 2
   m_LocalRotation: {x: -1, y: -0, z: -0, w: 0.0000000754979}
-  m_LocalPosition: {x: 0, y: -0.003, z: 0}
+  m_LocalPosition: {x: -0.00571, y: -0.003, z: 0}
   m_LocalScale: {x: 0.010719361, y: 0.010719359, z: 0.010719359}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -162,7 +162,7 @@ Transform:
   m_GameObject: {fileID: 1838046642644125851}
   serializedVersion: 2
   m_LocalRotation: {x: -1, y: -0, z: -0, w: 0.0000000754979}
-  m_LocalPosition: {x: 0, y: -0.003, z: 0}
+  m_LocalPosition: {x: 0.00513, y: -0.003, z: 0}
   m_LocalScale: {x: 0.010719361, y: 0.010719359, z: 0.010719359}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -193,8 +193,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6927425486149818824}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.25125033, z: 0.9679222, w: 0}
-  m_LocalPosition: {x: 0, y: -0.0105, z: -0.012799998}
+  m_LocalRotation: {x: 0, y: 0.7071068, z: 0.7071068, w: 0}
+  m_LocalPosition: {x: 0, y: -0.02, z: -0.0000000030199159}
   m_LocalScale: {x: 0.010719361, y: 0.010719359, z: 0.010719359}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -461,6 +461,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: be672b5bc9e693f4fb1dea58bd6cea22, type: 3}
       insertIndex: -1
       addedObject: {fileID: 5646189869626509974}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: be672b5bc9e693f4fb1dea58bd6cea22, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7063170044811870316}
   m_SourcePrefab: {fileID: 100100000, guid: be672b5bc9e693f4fb1dea58bd6cea22, type: 3}
 --- !u!4 &6275058897760129607 stripped
 Transform:
@@ -578,14 +581,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6eb4536eed21d7d4bab17021986b793b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Workbench
-  ShowTopMostFoldoutHeaderGroup: 1
   workbenchCam: {fileID: 2639224332128405905}
   WorkbenchTopCamera: {fileID: 3805289396349603210}
   spawnPoints:
   - {fileID: 7389018103140130716}
   - {fileID: 1292968236729043581}
   - {fileID: 8814869505501433996}
-  workbenchItems:
-    UpdateTraits:
-      MinSecondsBetweenUpdates: 0
-      MaxSecondsBetweenUpdates: 0
+--- !u!65 &7063170044811870316
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6655946959604795645}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.02, y: 0.002, z: 0.01}
+  m_Center: {x: 0, y: 0, z: 0}

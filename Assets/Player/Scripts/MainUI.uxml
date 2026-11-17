@@ -4,9 +4,9 @@
         <ui:VisualElement name="blur-bg" picking-mode="Ignore" style="flex-grow: 1; position: absolute; top: 0; right: 0; bottom: 0; left: 0; background-color: rgba(0, 0, 0, 0.08); filter: blur(50);"/>
         <ui:VisualElement name="craft-panel" picking-mode="Ignore" style="flex-grow: 1; background-color: rgba(55, 55, 55, 0); padding-top: 20px; padding-right: 20px; padding-bottom: 20px; padding-left: 20px;">
             <ui:VisualElement name="slots-row" style="flex-grow: 1; flex-direction: row;">
-                <ui:VisualElement name="slot-1" class="slot" style="flex-grow: 1; top: 60px; width: 64px; height: 64px; background-color: rgb(140, 140, 140);"/>
-                <ui:VisualElement name="slot-2" class="slot" style="flex-grow: 1; top: 60px; width: 64px; height: 64px; background-color: rgb(128, 128, 128);"/>
-                <ui:VisualElement name="slot-3" class="slot" style="flex-grow: 1; top: 60px; width: 64px; height: 64px; background-color: rgb(140, 140, 140);"/>
+                <ui:VisualElement name="slot-0" class="slot" style="flex-grow: 1; top: 60px; width: 64px; height: 64px; background-color: rgb(140, 140, 140);"/>
+                <ui:VisualElement name="slot-1" class="slot" style="flex-grow: 1; top: 60px; width: 64px; height: 64px; background-color: rgb(128, 128, 128);"/>
+                <ui:VisualElement name="slot-2" class="slot" style="flex-grow: 1; top: 60px; width: 64px; height: 64px; background-color: rgb(140, 140, 140);"/>
             </ui:VisualElement>
             <ui:Button text="Fabriquer" name="craft-button" style="-unity-text-align: middle-center; height: 61px; width: 152px;"/>
         </ui:VisualElement>

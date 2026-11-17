@@ -220,12 +220,59 @@ public class PlayerInventory : NetworkBehaviour
         if (playerWorkbench == null) return;
 
         string[] partsA = slotA.Split('-');
-        string typeA = partsA[0];
-        int idA = int.Parse(partsA[1]);
-
         string[] partsB = slotB.Split('-');
-        string typeB = partsB[0];
-        int idB = int.Parse(partsB[1]);
+
+        if (partsA.Length < 2 || partsB.Length < 2)
+        {
+            Debug.LogWarning($"[PlayerInventory] Format de slot invalide : '{slotA}' ou '{slotB}'.");
+            return;
+        }
+
+        string typeA = partsA[0].ToLower();
+        string typeB = partsB[0].ToLower();
+        
+        if (!int.TryParse(partsA[1], out int idA) || !int.TryParse(partsB[1], out int idB))
+        {
+            Debug.LogWarning($"[PlayerInventory] Impossible de lire l'index dans '{slotA}' ou '{slotB}'.");
+            return;
+        }
+
+        // Vérification stricte calquée sur la condition ternaire (hotbar vs établi)
+        if (typeA == "hotbar")
+        {
+            if (idA < 0 || idA >= inventorySlots.Count)
+            {
+                Debug.LogError($"[PlayerInventory] Index Hotbar A ({idA}) hors limites pour '{slotA}' (Taille: {inventorySlots.Count})");
+                return;
+            }
+        }
+        else
+        {
+            int wbLength = playerWorkbench.workbenchItems != null ? playerWorkbench.workbenchItems.Length : 0;
+            if (playerWorkbench.workbenchItems == null || idA < 0 || idA >= wbLength)
+            {
+                Debug.LogError($"[PlayerInventory] Index Établi A ({idA}) hors limites pour '{slotA}' ! Taille de workbenchItems : {wbLength}. (Pense à numéroter tes slots UI à partir de 0, ou augmente la taille de workbenchItems).");
+                return;
+            }
+        }
+
+        if (typeB == "hotbar")
+        {
+            if (idB < 0 || idB >= inventorySlots.Count)
+            {
+                Debug.LogError($"[PlayerInventory] Index Hotbar B ({idB}) hors limites pour '{slotB}' (Taille: {inventorySlots.Count})");
+                return;
+            }
+        }
+        else
+        {
+            int wbLength = playerWorkbench.workbenchItems != null ? playerWorkbench.workbenchItems.Length : 0;
+            if (playerWorkbench.workbenchItems == null || idB < 0 || idB >= wbLength)
+            {
+                Debug.LogError($"[PlayerInventory] Index Établi B ({idB}) hors limites pour '{slotB}' ! Taille de workbenchItems : {wbLength}. (Pense à numéroter tes slots UI à partir de 0, ou augmente la taille de workbenchItems).");
+                return;
+            }
+        }
 
         int itemA = (typeA == "hotbar") ? inventorySlots[idA] : playerWorkbench.workbenchItems[idA];
         int itemB = (typeB == "hotbar") ? inventorySlots[idB] : playerWorkbench.workbenchItems[idB];
